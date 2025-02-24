@@ -12,29 +12,38 @@ import {
 } from 'recharts';
 import { COLORS } from '../MAUTDashboard';
 
+type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
+type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
+                    'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
+
 interface RadarTabProps {
   data: {
     baseline: {
-      criteria: string[];
-      methods: string[];
-      values: { [key: string]: number[] };
+      criteria: CriteriaName[];
+      methods: MethodName[];
+      values: { [key in MethodName]: number[] };
     };
-    weights: { [key: string]: number };
+    weights: { [key in CriteriaName]: number };
   } | null;
 }
 
 type MethodColors = {
-  [key in 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method']: string;
+  [key in MethodName]: string;
 };
 
+interface RadarDataPoint {
+  criteria: CriteriaName;
+  [key: string]: CriteriaName | number | undefined;
+}
+
 const RadarTab: React.FC<RadarTabProps> = ({ data }) => {
-  const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
+  const [selectedMethods, setSelectedMethods] = useState<MethodName[]>([]);
 
   if (!data) return null;
 
   const formatDataForRadar = () => {
     return data.baseline.criteria.map((criteria, index) => {
-      const dataPoint: { [key: string]: any } = {
+      const dataPoint: RadarDataPoint = {
         criteria,
       };
 
@@ -48,7 +57,7 @@ const RadarTab: React.FC<RadarTabProps> = ({ data }) => {
     });
   };
 
-  const toggleMethod = (method: string) => {
+  const toggleMethod = (method: MethodName) => {
     setSelectedMethods((prev) =>
       prev.includes(method)
         ? prev.filter((m) => m !== method)
@@ -56,7 +65,7 @@ const RadarTab: React.FC<RadarTabProps> = ({ data }) => {
     );
   };
 
-  const getMethodColor = (method: string): string => {
+  const getMethodColor = (method: MethodName): string => {
     return (COLORS as MethodColors)[method as keyof MethodColors] || '#8884d8';
   };
 

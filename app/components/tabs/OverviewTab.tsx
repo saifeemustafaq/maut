@@ -10,14 +10,18 @@ import {
   TableRow,
 } from '../ui/table';
 
+type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
+type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
+                    'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
+
 interface OverviewTabProps {
   data: {
     baseline: {
-      criteria: string[];
-      methods: string[];
-      values: { [key: string]: number[] };
+      criteria: CriteriaName[];
+      methods: MethodName[];
+      values: { [key in MethodName]: number[] };
     };
-    weights: { [key: string]: number };
+    weights: { [key in CriteriaName]: number };
     nonEditableContent: {
       process: Array<{
         step: string;
@@ -25,10 +29,10 @@ interface OverviewTabProps {
       }>;
     };
   } | null;
-  handleMethodSelect: (method: string) => void;
-  handleCriteriaSelect: (criteria: string) => void;
-  onValueChange: (method: string, criteria: string, value: number) => void;
-  onWeightChange: (criteria: string, value: number) => void;
+  handleMethodSelect: (method: MethodName) => void;
+  handleCriteriaSelect: (criteria: CriteriaName) => void;
+  onValueChange: (method: MethodName, criteria: CriteriaName, value: number) => void;
+  onWeightChange: (criteria: CriteriaName, value: number) => void;
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -40,8 +44,8 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
 }) => {
   if (!data) return null;
 
-  const calculateWeightedScore = (method: string) => {
-    return data.baseline.criteria.reduce((total: number, criteria: string, index: number) => {
+  const calculateWeightedScore = (method: MethodName) => {
+    return data.baseline.criteria.reduce((total: number, criteria: CriteriaName, index: number) => {
       const value = data.baseline.values[method][index];
       const weight = data.weights[criteria];
       return total + (value * weight);
@@ -57,7 +61,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
             <TableHeader>
               <TableRow>
                 <TableHead>Criteria</TableHead>
-                {data.baseline.methods.map((method: string) => (
+                {data.baseline.methods.map((method: MethodName) => (
                   <TableHead key={method}>
                     <button
                       onClick={() => handleMethodSelect(method)}
@@ -71,7 +75,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.baseline.criteria.map((criteria: string, rowIndex: number) => (
+              {data.baseline.criteria.map((criteria: CriteriaName, rowIndex: number) => (
                 <TableRow key={criteria}>
                   <TableCell>
                     <button
@@ -81,7 +85,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
                       {criteria}
                     </button>
                   </TableCell>
-                  {data.baseline.methods.map((method: string) => (
+                  {data.baseline.methods.map((method: MethodName) => (
                     <TableCell key={`${method}-${criteria}`}>
                       <input
                         type="number"
@@ -108,7 +112,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               ))}
               <TableRow className="font-bold">
                 <TableCell>Weighted Score</TableCell>
-                {data.baseline.methods.map((method: string) => (
+                {data.baseline.methods.map((method: MethodName) => (
                   <TableCell key={`${method}-weighted`}>
                     {calculateWeightedScore(method).toFixed(2)}
                   </TableCell>

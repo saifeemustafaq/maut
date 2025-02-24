@@ -21,29 +21,36 @@ import {
 } from '../ui/table';
 import { COLORS } from '../MAUTDashboard';
 
+type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
+type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
+                    'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
+
 interface CriteriaTabProps {
   data: {
     baseline: {
-      criteria: string[];
-      methods: string[];
-      values: { [key: string]: number[] };
+      criteria: CriteriaName[];
+      methods: MethodName[];
+      values: { [key in MethodName]: number[] };
     };
-    weights: { [key: string]: number };
+    weights: { [key in CriteriaName]: number };
   } | null;
-  selectedCriteria: string;
-  handleMethodSelect: (method: string) => void;
-  onValueChange: (method: string, criteria: string, value: number) => void;
-  onWeightChange: (criteria: string, value: number) => void;
+  selectedCriteria: CriteriaName;
+  handleMethodSelect: (method: MethodName) => void;
+  handleCriteriaSelect: (criteria: CriteriaName) => void;
+  onValueChange: (method: MethodName, criteria: CriteriaName, value: number) => void;
+  onWeightChange: (criteria: CriteriaName, value: number) => void;
 }
 
 type MethodColors = {
-  [key in 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method']: string;
+  [key in MethodName]: string;
 };
 
 const CriteriaTab: React.FC<CriteriaTabProps> = ({
   data,
   selectedCriteria,
   handleMethodSelect,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  handleCriteriaSelect,
   onValueChange,
   onWeightChange,
 }) => {
@@ -131,7 +138,7 @@ const CriteriaTab: React.FC<CriteriaTabProps> = ({
                 <TableRow key={method}>
                   <TableCell>
                     <button
-                      onClick={() => handleMethodSelect(method)}
+                      onClick={() => handleMethodSelect(method as MethodName)}
                       className="text-blue-600 hover:underline"
                     >
                       {method}
@@ -144,7 +151,7 @@ const CriteriaTab: React.FC<CriteriaTabProps> = ({
                       max="5"
                       value={rawScore}
                       onChange={(e) =>
-                        onValueChange(method, selectedCriteria, Number(e.target.value))
+                        onValueChange(method as MethodName, selectedCriteria, Number(e.target.value))
                       }
                       className="w-16 p-1 border rounded"
                     />

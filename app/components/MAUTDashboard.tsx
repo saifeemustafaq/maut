@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
-import { useRouter } from 'next/navigation';
 import OverviewTab from './tabs/OverviewTab';
 import CriteriaTab from './tabs/CriteriaTab';
 import MethodTab from './tabs/MethodTab';
@@ -82,6 +80,7 @@ export const COLORS: { [key in MethodName]: string } = {
 const MAUTDashboard = () => {
   const [data, setData] = useState<MAUTData | null>(null);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedCriteria, setSelectedCriteria] = useState<CriteriaName | null>(null);

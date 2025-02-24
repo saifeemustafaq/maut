@@ -21,23 +21,27 @@ import {
 } from '../ui/table';
 import { COLORS } from '../MAUTDashboard';
 
+type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
+type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
+                    'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
+
 interface MethodTabProps {
   data: {
     baseline: {
-      criteria: string[];
-      methods: string[];
-      values: { [key: string]: number[] };
+      criteria: CriteriaName[];
+      methods: MethodName[];
+      values: { [key in MethodName]: number[] };
     };
-    weights: { [key: string]: number };
+    weights: { [key in CriteriaName]: number };
   } | null;
-  selectedMethod: string;
-  handleMethodSelect: (method: string) => void;
-  handleCriteriaSelect: (criteria: string) => void;
-  onValueChange: (method: string, criteria: string, value: number) => void;
+  selectedMethod: MethodName;
+  handleMethodSelect: (method: MethodName) => void;
+  handleCriteriaSelect: (criteria: CriteriaName) => void;
+  onValueChange: (method: MethodName, criteria: CriteriaName, value: number) => void;
 }
 
 type MethodColors = {
-  [key in 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method']: string;
+  [key in MethodName]: string;
 };
 
 const MethodTab: React.FC<MethodTabProps> = ({
@@ -57,8 +61,8 @@ const MethodTab: React.FC<MethodTabProps> = ({
     }));
   };
 
-  const getMethodColor = (method: string): string => {
-    return (COLORS as MethodColors)[method as keyof MethodColors] || '#8884d8';
+  const getMethodColor = (method: MethodName): string => {
+    return (COLORS as MethodColors)[method] || '#8884d8';
   };
 
   const calculateTotalScore = () => {
