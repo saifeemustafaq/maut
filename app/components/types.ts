@@ -1,6 +1,5 @@
 export type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
-export type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
-                   'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
+export type CriteriaName = 'Team size' | 'Team distribution' | 'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance';
 
 export interface MAUTData {
   baseline: {
