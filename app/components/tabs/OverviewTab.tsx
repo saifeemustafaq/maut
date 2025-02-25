@@ -9,26 +9,19 @@ import {
   TableHeader,
   TableRow,
 } from '../ui/table';
+import ScaleInterpretation from '../ui/ScaleInterpretation';
+import { CRITERIA_COLORS } from '../MAUTDashboard';
+import { CriteriaName, MAUTData, MethodName } from '../types';
 
 interface OverviewTabProps {
-  data: {
-    baseline: {
-      criteria: string[];
-      methods: string[];
-      values: { [key: string]: number[] };
-    };
-    weights: { [key: string]: number };
-    nonEditableContent: {
-      process: Array<{
-        step: string;
-        description: string;
-      }>;
-    };
-  } | null;
-  handleMethodSelect: (method: string) => void;
-  handleCriteriaSelect: (criteria: string) => void;
-  onValueChange: (method: string, criteria: string, value: number) => void;
-  onWeightChange: (criteria: string, value: number) => void;
+  data: MAUTData;
+  handleMethodSelect: (method: MethodName) => void;
+  handleCriteriaSelect: (criteria: CriteriaName) => void;
+  onValueChange: (method: MethodName, criteria: CriteriaName, newValue: number) => void;
+  onWeightChange: (criteria: CriteriaName, newWeight: number) => void;
+  criteriaIcons: { [key in CriteriaName]: React.ReactElement };
+  TooltipWrapper: React.FC<{ children: React.ReactNode; content: string }>;
+  getCriteriaTooltip: (criteria: CriteriaName) => string;
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -37,11 +30,14 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   handleCriteriaSelect,
   onValueChange,
   onWeightChange,
+  criteriaIcons,
+  TooltipWrapper,
+  getCriteriaTooltip
 }) => {
   if (!data) return null;
 
-  const calculateWeightedScore = (method: string) => {
-    return data.baseline.criteria.reduce((total: number, criteria: string, index: number) => {
+  const calculateWeightedScore = (method: MethodName) => {
+    return data.baseline.criteria.reduce((total: number, criteria: CriteriaName, index: number) => {
       const value = data.baseline.values[method][index];
       const weight = data.weights[criteria];
       return total + (value * weight);
@@ -51,13 +47,13 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-semibold mb-4">Baseline Scores</h2>
+        <h2 className="text-xl font-semibold mb-4">Baseline Scores (click any criteria for detailed visualization)</h2>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Criteria</TableHead>
-                {data.baseline.methods.map((method: string) => (
+                {data.baseline.methods.map((method: MethodName) => (
                   <TableHead key={method}>
                     <button
                       onClick={() => handleMethodSelect(method)}
@@ -71,44 +67,67 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.baseline.criteria.map((criteria: string, rowIndex: number) => (
-                <TableRow key={criteria}>
-                  <TableCell>
-                    <button
-                      onClick={() => handleCriteriaSelect(criteria)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {criteria}
-                    </button>
-                  </TableCell>
-                  {data.baseline.methods.map((method: string) => (
-                    <TableCell key={`${method}-${criteria}`}>
-                      <input
-                        type="number"
-                        min="1"
-                        max="5"
-                        value={data.baseline.values[method][rowIndex]}
-                        onChange={(e) => onValueChange(method, criteria, Number(e.target.value))}
-                        className="w-16 p-1 border rounded"
-                      />
-                    </TableCell>
-                  ))}
-                  <TableCell>
-                    <input
-                      type="number"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={data.weights[criteria]}
-                      onChange={(e) => onWeightChange(criteria, Number(e.target.value))}
-                      className="w-20 p-1 border rounded"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {data.baseline.criteria.map((criteria: CriteriaName, rowIndex: number) => {
+                const colors = CRITERIA_COLORS[criteria];
+                return (
+                  <React.Fragment key={criteria}>
+                    <TableRow style={{ backgroundColor: colors.light }}>
+                      <TableCell>
+                        <TooltipWrapper content={getCriteriaTooltip(criteria)}>
+                          <div 
+                            onClick={() => handleCriteriaSelect(criteria)}
+                            className="flex items-center cursor-pointer hover:text-blue-600"
+                          >
+                            {criteriaIcons[criteria]}
+                            <button
+                              className="text-lg font-semibold hover:underline"
+                              style={{ color: colors.dark }}
+                            >
+                              {criteria}
+                            </button>
+                          </div>
+                        </TooltipWrapper>
+                      </TableCell>
+                      {data.baseline.methods.map((method: MethodName) => (
+                        <TableCell key={`${method}-${criteria}`}>
+                          <input
+                            type="number"
+                            min="1"
+                            max="5"
+                            value={data.baseline.values[method][rowIndex]}
+                            onChange={(e) => onValueChange(method, criteria, Number(e.target.value))}
+                            className="w-16 p-1 border rounded bg-white"
+                            style={{ borderColor: colors.medium }}
+                          />
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <input
+                          type="number"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={data.weights[criteria]}
+                          onChange={(e) => onWeightChange(criteria, Number(e.target.value))}
+                          className="w-20 p-1 border rounded bg-white"
+                          style={{ borderColor: colors.medium }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                    <TableRow style={{ backgroundColor: colors.light }}>
+                      <TableCell colSpan={data.baseline.methods.length + 2}>
+                        <ScaleInterpretation 
+                          scaleInterpretation={data.nonEditableContent.factsAndAssumptions[criteria].scaleInterpretation}
+                          criteria={criteria}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                );
+              })}
               <TableRow className="font-bold">
                 <TableCell>Weighted Score</TableCell>
-                {data.baseline.methods.map((method: string) => (
+                {data.baseline.methods.map((method: MethodName) => (
                   <TableCell key={`${method}-weighted`}>
                     {calculateWeightedScore(method).toFixed(2)}
                   </TableCell>

@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
-import { useRouter } from 'next/navigation';
+import { FaChartPie, FaClipboardList, FaCodeBranch, FaChartLine } from 'react-icons/fa';
+import { BsPeopleFill, BsGlobe2, BsShieldCheck, BsLightningCharge } from 'react-icons/bs';
+import { MdSpeed, MdAttachMoney, MdScale, MdVerifiedUser, MdWorkspaces } from 'react-icons/md';
 import OverviewTab from './tabs/OverviewTab';
 import CriteriaTab from './tabs/CriteriaTab';
 import MethodTab from './tabs/MethodTab';
 import RadarTab from './tabs/RadarTab';
+import * as Tooltip from '@radix-ui/react-tooltip';
 
 type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
-type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
+export type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
                     'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
 
 interface MAUTData {
@@ -28,7 +30,18 @@ interface MAUTData {
       step: string;
       description: string;
     }>;
-    factsAndAssumptions: Record<string, unknown>;
+    factsAndAssumptions: {
+      [key in CriteriaName]: {
+        facts: string;
+        scaleInterpretation: {
+          1: string;
+          2: string;
+          3: string;
+          4: string;
+          5: string;
+        };
+      };
+    };
   };
 }
 
@@ -66,7 +79,98 @@ const DEFAULT_DATA: MAUTData = {
       { step: 'Score Methodologies', description: "Each team member independently voted on how each method would score relative to the predefined scale." },
       { step: 'Apply Weighted Scores', description: "We multiplied the baseline values by assigned weights to calculate overall scores for objective comparison." }
     ],
-    factsAndAssumptions: {}
+    factsAndAssumptions: {
+      'Team size': {
+        facts: "Fact: The NDSS / SALL-E team consists of fewer than 15 people (PRD specifies 8 in San Jose, 3 in Tampa). The team is cross-functional (developers, product managers, engineering managers). Assumption: Since the team is small, lightweight methodologies (e.g., Scrum, Kanban) are preferred.",
+        scaleInterpretation: {
+          1: "Large team (50+ members), Requires complex governance",
+          2: "Medium-sized team (30–50 members), Needs structured processes",
+          3: "Small team (15–30 members), Can balance Agile with structure",
+          4: "Lean team (<15 members), Prefers lightweight methodologies",
+          5: "Very small team (<10 members), Agile & fast iterations are ideal"
+        }
+      },
+      'Team distribution': {
+        facts: "Fact: Team is distributed globally across San Jose & Tampa. Assumption: Asynchronous communication and strong collaboration tools (Slack, Jira) are required.",
+        scaleInterpretation: {
+          1: "Fully co-located team in one office",
+          2: "Mostly co-located with some remote members",
+          3: "Hybrid team (partially remote)",
+          4: "Majority distributed across different locations",
+          5: "Fully distributed across multiple time zones"
+        }
+      },
+      'Application Criticality': {
+        facts: "Fact: The platform is not mission-critical but affects workforce productivity and contractor payments. Assumption: Stability is important, but occasional downtime is tolerable.",
+        scaleInterpretation: {
+          1: "High-risk system (e.g., medical, aerospace)",
+          2: "Critical financial system (e.g., stock trading)",
+          3: "Medium-criticality (e.g., HR software, contractor payments)",
+          4: "Low-medium impact (some downtime tolerable)",
+          5: "Non-critical system (e.g., internal tools, hobby apps)"
+        }
+      },
+      'Requirement Volatility': {
+        facts: "Fact: The PRD states that requirements may evolve as new startups onboard. Assumption: The methodology must support rapid adaptation to changes.",
+        scaleInterpretation: {
+          1: "Very stable requirements (e.g., government projects)",
+          2: "Mostly stable, minor changes expected",
+          3: "Some moderate changes, needs flexibility",
+          4: "High volatility, frequent requirement shifts",
+          5: "Extremely volatile, rapidly changing priorities"
+        }
+      },
+      'Development Speed': {
+        facts: "Fact: The time to launch is a success metric, requiring fast iterations. Assumption: CI/CD pipelines and automated testing are essential for rapid delivery.",
+        scaleInterpretation: {
+          1: "Long-term development (>1 year)",
+          2: "Medium-speed project, no urgent deadlines",
+          3: "Balanced speed vs. quality",
+          4: "Rapid development required",
+          5: "Extreme speed (MVP in weeks, continuous deployment)"
+        }
+      },
+      'Cost Management': {
+        facts: "Fact: NDSS wants to control costs while ensuring quality. Assumption: Lean principles should minimize waste and optimize spending.",
+        scaleInterpretation: {
+          1: "Unlimited budget, cost is not a concern",
+          2: "High budget, but cost-conscious",
+          3: "Moderate budget, needs cost optimization",
+          4: "Tight budget, needs efficiency",
+          5: "Very limited budget, requires strict cost control"
+        }
+      },
+      'Scalability': {
+        facts: "Fact: PRD states SALL-E will expand to support more users and clients over time. Assumption: The system must be modular and cloud-based for growth.",
+        scaleInterpretation: {
+          1: "Small, single-use application",
+          2: "Some scalability but not a priority",
+          3: "Needs moderate scalability",
+          4: "Needs strong scalability",
+          5: "High growth expected, must scale rapidly"
+        }
+      },
+      'Quality Assurance': {
+        facts: "Fact: The PRD emphasizes ensuring reliability and minimizing downtime. Assumption: TDD, automated testing, and peer code reviews will be needed.",
+        scaleInterpretation: {
+          1: "Low emphasis on quality, testing not a priority",
+          2: "Minimal QA, only functional testing",
+          3: "Moderate QA, some automation and code reviews",
+          4: "Strong QA, TDD, automated testing, code reviews",
+          5: "Very high quality standards, rigorous testing required"
+        }
+      },
+      'Workflow Efficiency': {
+        facts: "Fact: The small team size means that workflow bottlenecks must be minimized. Assumption: Kanban (with WIP limits) and backlog prioritization (MoSCoW method) can improve efficiency.",
+        scaleInterpretation: {
+          1: "Poor workflow efficiency, lots of bottlenecks",
+          2: "Some delays, but manageable",
+          3: "Moderate efficiency, room for improvement",
+          4: "Well-structured workflow, smooth progress",
+          5: "Highly optimized workflow, minimal delays"
+        }
+      }
+    }
   }
 };
 
@@ -79,9 +183,63 @@ export const COLORS: { [key in MethodName]: string } = {
   "Our Method": "#8884D8"
 };
 
+// Color palette for criteria categories
+export const CRITERIA_COLORS: { [key in CriteriaName]: { light: string; medium: string; dark: string; } } = {
+  "Team size": { light: "#E1F5FE", medium: "#81D4FA", dark: "#0288D1" },
+  "Team distribution": { light: "#F3E5F5", medium: "#CE93D8", dark: "#7B1FA2" },
+  "Application Criticality": { light: "#FFF3E0", medium: "#FFB74D", dark: "#F57C00" },
+  "Requirement Volatility": { light: "#E8F5E9", medium: "#81C784", dark: "#2E7D32" },
+  "Development Speed": { light: "#F3E5F5", medium: "#BA68C8", dark: "#7B1FA2" },
+  "Cost Management": { light: "#E1F5FE", medium: "#4FC3F7", dark: "#0288D1" },
+  "Scalability": { light: "#FFF3E0", medium: "#FFA726", dark: "#F57C00" },
+  "Quality Assurance": { light: "#E8F5E9", medium: "#66BB6A", dark: "#2E7D32" },
+  "Workflow Efficiency": { light: "#E0F7FA", medium: "#4DD0E1", dark: "#00838F" }
+};
+
+// Add icon mapping before the MAUTDashboard component
+const CRITERIA_ICONS: { [key in CriteriaName]: React.ReactElement } = {
+  "Team size": <BsPeopleFill className="inline-block mr-2" />,
+  "Team distribution": <BsGlobe2 className="inline-block mr-2" />,
+  "Application Criticality": <BsShieldCheck className="inline-block mr-2" />,
+  "Requirement Volatility": <BsLightningCharge className="inline-block mr-2" />,
+  "Development Speed": <MdSpeed className="inline-block mr-2" />,
+  "Cost Management": <MdAttachMoney className="inline-block mr-2" />,
+  "Scalability": <MdScale className="inline-block mr-2" />,
+  "Quality Assurance": <MdVerifiedUser className="inline-block mr-2" />,
+  "Workflow Efficiency": <MdWorkspaces className="inline-block mr-2" />
+};
+
+// Add a Tooltip wrapper component for reusability
+const TooltipWrapper = ({ children, content }: { children: React.ReactNode; content: string }) => (
+  <Tooltip.Provider>
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <div className="inline-flex items-center cursor-pointer">
+          {children}
+        </div>
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          className="bg-gray-800 text-white px-3 py-2 rounded-md text-sm"
+          sideOffset={5}
+        >
+          {content}
+          <Tooltip.Arrow className="fill-gray-800" />
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  </Tooltip.Provider>
+);
+
+// Add this helper function to get tooltip content for criteria
+const getCriteriaTooltip = (criteria: CriteriaName): string => {
+  return `Click to visualize ${criteria.toLowerCase()} analysis`;
+};
+
 const MAUTDashboard = () => {
   const [data, setData] = useState<MAUTData | null>(null);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedCriteria, setSelectedCriteria] = useState<CriteriaName | null>(null);
@@ -188,30 +346,45 @@ const MAUTDashboard = () => {
       
       {/* Dashboard Navigation */}
       <div className="flex flex-wrap gap-2 mb-6">
-        <button 
-          className={`px-4 py-2 rounded-md ${activeTab === 'overview' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          Overview
-        </button>
-        <button 
-          className={`px-4 py-2 rounded-md ${activeTab === 'criteria' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-          onClick={() => setActiveTab('criteria')}
-        >
-          Criteria Analysis
-        </button>
-        <button 
-          className={`px-4 py-2 rounded-md ${activeTab === 'method' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-          onClick={() => setActiveTab('method')}
-        >
-          Method Analysis
-        </button>
-        <button 
-          className={`px-4 py-2 rounded-md ${activeTab === 'radar' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-          onClick={() => setActiveTab('radar')}
-        >
-          Radar Comparison
-        </button>
+        <TooltipWrapper content="Overview of all criteria and methods">
+          <button 
+            className={`px-4 py-2 rounded-md flex items-center ${activeTab === 'overview' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            <FaChartPie className="mr-2" />
+            Overview
+          </button>
+        </TooltipWrapper>
+        
+        <TooltipWrapper content="Detailed analysis of individual criteria">
+          <button 
+            className={`px-4 py-2 rounded-md flex items-center ${activeTab === 'criteria' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveTab('criteria')}
+          >
+            <FaClipboardList className="mr-2" />
+            Criteria Analysis
+          </button>
+        </TooltipWrapper>
+        
+        <TooltipWrapper content="Analysis of individual methods">
+          <button 
+            className={`px-4 py-2 rounded-md flex items-center ${activeTab === 'method' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveTab('method')}
+          >
+            <FaCodeBranch className="mr-2" />
+            Method Analysis
+          </button>
+        </TooltipWrapper>
+        
+        <TooltipWrapper content="Compare methods using radar charts">
+          <button 
+            className={`px-4 py-2 rounded-md flex items-center ${activeTab === 'radar' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            onClick={() => setActiveTab('radar')}
+          >
+            <FaChartLine className="mr-2" />
+            Radar Comparison
+          </button>
+        </TooltipWrapper>
       </div>
       
       {/* Tab Content */}
@@ -222,6 +395,9 @@ const MAUTDashboard = () => {
           handleCriteriaSelect={handleCriteriaSelect}
           onValueChange={handleValueChange}
           onWeightChange={handleWeightChange}
+          criteriaIcons={CRITERIA_ICONS}
+          TooltipWrapper={TooltipWrapper}
+          getCriteriaTooltip={getCriteriaTooltip}
         />
       )}
       
@@ -233,6 +409,9 @@ const MAUTDashboard = () => {
           handleMethodSelect={handleMethodSelect}
           onValueChange={handleValueChange}
           onWeightChange={handleWeightChange}
+          criteriaIcons={CRITERIA_ICONS}
+          TooltipWrapper={TooltipWrapper}
+          getCriteriaTooltip={getCriteriaTooltip}
         />
       )}
       
@@ -243,11 +422,17 @@ const MAUTDashboard = () => {
           handleMethodSelect={handleMethodSelect}
           handleCriteriaSelect={handleCriteriaSelect}
           onValueChange={handleValueChange}
+          criteriaIcons={CRITERIA_ICONS}
+          TooltipWrapper={TooltipWrapper}
+          getCriteriaTooltip={getCriteriaTooltip}
         />
       )}
       
       {activeTab === 'radar' && (
-        <RadarTab data={data} />
+        <RadarTab 
+          data={data}
+          criteriaIcons={CRITERIA_ICONS}
+        />
       )}
     </div>
   );

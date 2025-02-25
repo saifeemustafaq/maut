@@ -20,32 +20,34 @@ import {
   TableRow,
 } from '../ui/table';
 import { COLORS } from '../MAUTDashboard';
+import { CriteriaName, MAUTData, MethodName } from '../types';
 
 interface CriteriaTabProps {
-  data: {
-    baseline: {
-      criteria: string[];
-      methods: string[];
-      values: { [key: string]: number[] };
-    };
-    weights: { [key: string]: number };
-  } | null;
-  selectedCriteria: string;
-  handleMethodSelect: (method: string) => void;
-  onValueChange: (method: string, criteria: string, value: number) => void;
-  onWeightChange: (criteria: string, value: number) => void;
+  data: MAUTData;
+  selectedCriteria: CriteriaName;
+  handleCriteriaSelect: (criteria: CriteriaName) => void;
+  handleMethodSelect: (method: MethodName) => void;
+  onValueChange: (method: MethodName, criteria: CriteriaName, newValue: number) => void;
+  onWeightChange: (criteria: CriteriaName, newWeight: number) => void;
+  criteriaIcons: { [key in CriteriaName]: React.ReactElement };
+  TooltipWrapper: React.FC<{ children: React.ReactNode; content: string }>;
+  getCriteriaTooltip: (criteria: CriteriaName) => string;
 }
 
 type MethodColors = {
-  [key in 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method']: string;
+  [key in MethodName]: string;
 };
 
 const CriteriaTab: React.FC<CriteriaTabProps> = ({
   data,
   selectedCriteria,
+  handleCriteriaSelect,
   handleMethodSelect,
   onValueChange,
   onWeightChange,
+  criteriaIcons,
+  TooltipWrapper,
+  getCriteriaTooltip
 }) => {
   if (!data) return null;
 
@@ -69,6 +71,21 @@ const CriteriaTab: React.FC<CriteriaTabProps> = ({
         <h2 className="text-xl font-semibold mb-4">
           {selectedCriteria} Analysis
         </h2>
+        <div className="flex space-x-4 mb-6">
+          {data.baseline.criteria.map((criteria) => (
+            <TooltipWrapper key={criteria} content={getCriteriaTooltip(criteria)}>
+              <button
+                onClick={() => handleCriteriaSelect(criteria)}
+                className={`flex items-center px-4 py-2 rounded-md ${
+                  selectedCriteria === criteria ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                }`}
+              >
+                {criteriaIcons[criteria]}
+                {criteria}
+              </button>
+            </TooltipWrapper>
+          ))}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 rounded-lg shadow">
             <h3 className="font-semibold mb-4">Scores by Method</h3>
@@ -131,7 +148,7 @@ const CriteriaTab: React.FC<CriteriaTabProps> = ({
                 <TableRow key={method}>
                   <TableCell>
                     <button
-                      onClick={() => handleMethodSelect(method)}
+                      onClick={() => handleMethodSelect(method as MethodName)}
                       className="text-blue-600 hover:underline"
                     >
                       {method}
@@ -144,7 +161,7 @@ const CriteriaTab: React.FC<CriteriaTabProps> = ({
                       max="5"
                       value={rawScore}
                       onChange={(e) =>
-                        onValueChange(method, selectedCriteria, Number(e.target.value))
+                        onValueChange(method as MethodName, selectedCriteria, Number(e.target.value))
                       }
                       className="w-16 p-1 border rounded"
                     />
