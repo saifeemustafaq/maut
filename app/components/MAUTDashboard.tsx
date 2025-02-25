@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { FaChartPie, FaClipboardList, FaCodeBranch, FaChartLine } from 'react-icons/fa';
-import { BsPeopleFill, BsGlobe2, BsShieldCheck, BsLightningCharge } from 'react-icons/bs';
-import { MdSpeed, MdAttachMoney, MdScale, MdVerifiedUser, MdWorkspaces } from 'react-icons/md';
+import { BsPeopleFill, BsGlobe2 } from 'react-icons/bs';
+import { MdSpeed, MdAttachMoney, MdScale, MdVerifiedUser } from 'react-icons/md';
 import OverviewTab from './tabs/OverviewTab';
 import CriteriaTab from './tabs/CriteriaTab';
 import MethodTab from './tabs/MethodTab';

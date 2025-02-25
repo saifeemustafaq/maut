@@ -1,6 +1,6 @@
 import React from 'react';
 import { CRITERIA_COLORS } from '../MAUTDashboard';
-import type { CriteriaName } from '../MAUTDashboard';
+import type { CriteriaName } from '../types';
 
 interface ScaleInterpretationProps {
   scaleInterpretation: {
