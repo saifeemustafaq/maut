@@ -20,25 +20,18 @@ import {
   TableRow,
 } from '../ui/table';
 import { COLORS } from '../MAUTDashboard';
-
-type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
-type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
-                    'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
+import { CriteriaName, MAUTData, MethodName } from '../types';
 
 interface CriteriaTabProps {
-  data: {
-    baseline: {
-      criteria: CriteriaName[];
-      methods: MethodName[];
-      values: { [key in MethodName]: number[] };
-    };
-    weights: { [key in CriteriaName]: number };
-  } | null;
+  data: MAUTData;
   selectedCriteria: CriteriaName;
-  handleMethodSelect: (method: MethodName) => void;
   handleCriteriaSelect: (criteria: CriteriaName) => void;
-  onValueChange: (method: MethodName, criteria: CriteriaName, value: number) => void;
-  onWeightChange: (criteria: CriteriaName, value: number) => void;
+  handleMethodSelect: (method: MethodName) => void;
+  onValueChange: (method: MethodName, criteria: CriteriaName, newValue: number) => void;
+  onWeightChange: (criteria: CriteriaName, newWeight: number) => void;
+  criteriaIcons: { [key in CriteriaName]: React.ReactElement };
+  TooltipWrapper: React.FC<{ children: React.ReactNode; content: string }>;
+  getCriteriaTooltip: (criteria: CriteriaName) => string;
 }
 
 type MethodColors = {
@@ -48,11 +41,13 @@ type MethodColors = {
 const CriteriaTab: React.FC<CriteriaTabProps> = ({
   data,
   selectedCriteria,
-  handleMethodSelect,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   handleCriteriaSelect,
+  handleMethodSelect,
   onValueChange,
   onWeightChange,
+  criteriaIcons,
+  TooltipWrapper,
+  getCriteriaTooltip
 }) => {
   if (!data) return null;
 
@@ -76,6 +71,21 @@ const CriteriaTab: React.FC<CriteriaTabProps> = ({
         <h2 className="text-xl font-semibold mb-4">
           {selectedCriteria} Analysis
         </h2>
+        <div className="flex space-x-4 mb-6">
+          {data.baseline.criteria.map((criteria) => (
+            <TooltipWrapper key={criteria} content={getCriteriaTooltip(criteria)}>
+              <button
+                onClick={() => handleCriteriaSelect(criteria)}
+                className={`flex items-center px-4 py-2 rounded-md ${
+                  selectedCriteria === criteria ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                }`}
+              >
+                {criteriaIcons[criteria]}
+                {criteria}
+              </button>
+            </TooltipWrapper>
+          ))}
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 rounded-lg shadow">
             <h3 className="font-semibold mb-4">Scores by Method</h3>

@@ -9,30 +9,19 @@ import {
   TableHeader,
   TableRow,
 } from '../ui/table';
-
-type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
-type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
-                    'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
+import ScaleInterpretation from '../ui/ScaleInterpretation';
+import { CRITERIA_COLORS } from '../MAUTDashboard';
+import { CriteriaName, MAUTData, MethodName } from '../types';
 
 interface OverviewTabProps {
-  data: {
-    baseline: {
-      criteria: CriteriaName[];
-      methods: MethodName[];
-      values: { [key in MethodName]: number[] };
-    };
-    weights: { [key in CriteriaName]: number };
-    nonEditableContent: {
-      process: Array<{
-        step: string;
-        description: string;
-      }>;
-    };
-  } | null;
+  data: MAUTData;
   handleMethodSelect: (method: MethodName) => void;
   handleCriteriaSelect: (criteria: CriteriaName) => void;
-  onValueChange: (method: MethodName, criteria: CriteriaName, value: number) => void;
-  onWeightChange: (criteria: CriteriaName, value: number) => void;
+  onValueChange: (method: MethodName, criteria: CriteriaName, newValue: number) => void;
+  onWeightChange: (criteria: CriteriaName, newWeight: number) => void;
+  criteriaIcons: { [key in CriteriaName]: React.ReactElement };
+  TooltipWrapper: React.FC<{ children: React.ReactNode; content: string }>;
+  getCriteriaTooltip: (criteria: CriteriaName) => string;
 }
 
 const OverviewTab: React.FC<OverviewTabProps> = ({
@@ -41,6 +30,9 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   handleCriteriaSelect,
   onValueChange,
   onWeightChange,
+  criteriaIcons,
+  TooltipWrapper,
+  getCriteriaTooltip
 }) => {
   if (!data) return null;
 
@@ -55,7 +47,7 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-semibold mb-4">Baseline Scores</h2>
+        <h2 className="text-xl font-semibold mb-4">Baseline Scores (click any criteria for detailed visualization)</h2>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -75,41 +67,64 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.baseline.criteria.map((criteria: CriteriaName, rowIndex: number) => (
-                <TableRow key={criteria}>
-                  <TableCell>
-                    <button
-                      onClick={() => handleCriteriaSelect(criteria)}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {criteria}
-                    </button>
-                  </TableCell>
-                  {data.baseline.methods.map((method: MethodName) => (
-                    <TableCell key={`${method}-${criteria}`}>
-                      <input
-                        type="number"
-                        min="1"
-                        max="5"
-                        value={data.baseline.values[method][rowIndex]}
-                        onChange={(e) => onValueChange(method, criteria, Number(e.target.value))}
-                        className="w-16 p-1 border rounded"
-                      />
-                    </TableCell>
-                  ))}
-                  <TableCell>
-                    <input
-                      type="number"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={data.weights[criteria]}
-                      onChange={(e) => onWeightChange(criteria, Number(e.target.value))}
-                      className="w-20 p-1 border rounded"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {data.baseline.criteria.map((criteria: CriteriaName, rowIndex: number) => {
+                const colors = CRITERIA_COLORS[criteria];
+                return (
+                  <React.Fragment key={criteria}>
+                    <TableRow style={{ backgroundColor: colors.light }}>
+                      <TableCell>
+                        <TooltipWrapper content={getCriteriaTooltip(criteria)}>
+                          <div 
+                            onClick={() => handleCriteriaSelect(criteria)}
+                            className="flex items-center cursor-pointer hover:text-blue-600"
+                          >
+                            {criteriaIcons[criteria]}
+                            <button
+                              className="text-lg font-semibold hover:underline"
+                              style={{ color: colors.dark }}
+                            >
+                              {criteria}
+                            </button>
+                          </div>
+                        </TooltipWrapper>
+                      </TableCell>
+                      {data.baseline.methods.map((method: MethodName) => (
+                        <TableCell key={`${method}-${criteria}`}>
+                          <input
+                            type="number"
+                            min="1"
+                            max="5"
+                            value={data.baseline.values[method][rowIndex]}
+                            onChange={(e) => onValueChange(method, criteria, Number(e.target.value))}
+                            className="w-16 p-1 border rounded bg-white"
+                            style={{ borderColor: colors.medium }}
+                          />
+                        </TableCell>
+                      ))}
+                      <TableCell>
+                        <input
+                          type="number"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={data.weights[criteria]}
+                          onChange={(e) => onWeightChange(criteria, Number(e.target.value))}
+                          className="w-20 p-1 border rounded bg-white"
+                          style={{ borderColor: colors.medium }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                    <TableRow style={{ backgroundColor: colors.light }}>
+                      <TableCell colSpan={data.baseline.methods.length + 2}>
+                        <ScaleInterpretation 
+                          scaleInterpretation={data.nonEditableContent.factsAndAssumptions[criteria].scaleInterpretation}
+                          criteria={criteria}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                );
+              })}
               <TableRow className="font-bold">
                 <TableCell>Weighted Score</TableCell>
                 {data.baseline.methods.map((method: MethodName) => (

@@ -20,24 +20,17 @@ import {
   TableRow,
 } from '../ui/table';
 import { COLORS } from '../MAUTDashboard';
-
-type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
-type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
-                    'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
+import { CriteriaName, MAUTData, MethodName } from '../types';
 
 interface MethodTabProps {
-  data: {
-    baseline: {
-      criteria: CriteriaName[];
-      methods: MethodName[];
-      values: { [key in MethodName]: number[] };
-    };
-    weights: { [key in CriteriaName]: number };
-  } | null;
+  data: MAUTData;
   selectedMethod: MethodName;
   handleMethodSelect: (method: MethodName) => void;
   handleCriteriaSelect: (criteria: CriteriaName) => void;
-  onValueChange: (method: MethodName, criteria: CriteriaName, value: number) => void;
+  onValueChange: (method: MethodName, criteria: CriteriaName, newValue: number) => void;
+  criteriaIcons: { [key in CriteriaName]: React.ReactElement };
+  TooltipWrapper: React.FC<{ children: React.ReactNode; content: string }>;
+  getCriteriaTooltip: (criteria: CriteriaName) => string;
 }
 
 type MethodColors = {
@@ -50,6 +43,9 @@ const MethodTab: React.FC<MethodTabProps> = ({
   handleMethodSelect,
   handleCriteriaSelect,
   onValueChange,
+  criteriaIcons,
+  TooltipWrapper,
+  getCriteriaTooltip
 }) => {
   if (!data) return null;
 
@@ -233,6 +229,31 @@ const MethodTab: React.FC<MethodTabProps> = ({
                 {method}
               </button>
             ))}
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="text-xl font-semibold mb-4">Criteria Scores</h3>
+        <div className="grid gap-4">
+          {data.baseline.criteria.map((criteria, index) => (
+            <TooltipWrapper key={criteria} content={getCriteriaTooltip(criteria)}>
+              <div 
+                className="bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleCriteriaSelect(criteria)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    {criteriaIcons[criteria]}
+                    <span className="font-medium">{criteria}</span>
+                  </div>
+                  <span className="text-lg font-semibold">
+                    {data.baseline.values[selectedMethod][index]}
+                  </span>
+                </div>
+                {/* Rest of your criteria display */}
+              </div>
+            </TooltipWrapper>
+          ))}
         </div>
       </div>
     </div>
