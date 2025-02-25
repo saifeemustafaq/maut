@@ -9,66 +9,28 @@ import CriteriaTab from './tabs/CriteriaTab';
 import MethodTab from './tabs/MethodTab';
 import RadarTab from './tabs/RadarTab';
 import * as Tooltip from '@radix-ui/react-tooltip';
-
-type MethodName = 'Scrum' | 'XP' | 'Kanban' | 'Scrumban' | 'Our Method';
-export type CriteriaName = 'Team size' | 'Team distribution' | 'Application Criticality' | 'Requirement Volatility' |
-                    'Development Speed' | 'Cost Management' | 'Scalability' | 'Quality Assurance' | 'Workflow Efficiency';
-
-interface MAUTData {
-  baseline: {
-    criteria: CriteriaName[];
-    methods: MethodName[];
-    values: {
-      [key in MethodName]: number[];
-    };
-  };
-  weights: {
-    [key in CriteriaName]: number;
-  };
-  nonEditableContent: {
-    process: Array<{
-      step: string;
-      description: string;
-    }>;
-    factsAndAssumptions: {
-      [key in CriteriaName]: {
-        facts: string;
-        scaleInterpretation: {
-          1: string;
-          2: string;
-          3: string;
-          4: string;
-          5: string;
-        };
-      };
-    };
-  };
-}
+import { CriteriaName, MethodName, MAUTData } from './types';
 
 // Default data from data.md
 const DEFAULT_DATA: MAUTData = {
   baseline: {
-    criteria: ['Team size', 'Team distribution', 'Application Criticality', 'Requirement Volatility', 
-               'Development Speed', 'Cost Management', 'Scalability', 'Quality Assurance', 'Workflow Efficiency'],
+    criteria: ['Team size', 'Team distribution', 'Development Speed', 'Cost Management', 'Scalability', 'Quality Assurance'],
     methods: ['Scrum', 'XP', 'Kanban', 'Scrumban', 'Our Method'],
     values: {
-      'Scrum': [5, 2, 2, 4, 5, 3, 3, 4, 4],
-      'XP': [4, 2, 2, 5, 5, 3, 2, 5, 4],
-      'Kanban': [3, 5, 3, 5, 4, 5, 4, 3, 5],
-      'Scrumban': [4, 4, 3, 5, 5, 4, 4, 4, 5],
-      'Our Method': [4, 5, 4, 5, 5, 4, 5, 5, 5]
+      'Scrum': [5, 2, 5, 3, 3, 4],
+      'XP': [4, 2, 5, 3, 2, 5],
+      'Kanban': [3, 5, 4, 5, 4, 3],
+      'Scrumban': [4, 4, 5, 4, 4, 4],
+      'Our Method': [4, 5, 5, 4, 5, 5]
     }
   },
   weights: {
-    'Team size': 0.1,
-    'Team distribution': 0.15,
-    'Application Criticality': 0.05,
-    'Requirement Volatility': 0.2,
-    'Development Speed': 0.12,
-    'Cost Management': 0.08,
-    'Scalability': 0.1,
-    'Quality Assurance': 0.07,
-    'Workflow Efficiency': 0.13
+    'Team size': 0.15,
+    'Team distribution': 0.20,
+    'Development Speed': 0.20,
+    'Cost Management': 0.15,
+    'Scalability': 0.15,
+    'Quality Assurance': 0.15
   },
   nonEditableContent: {
     process: [
@@ -98,26 +60,6 @@ const DEFAULT_DATA: MAUTData = {
           3: "Hybrid team (partially remote)",
           4: "Majority distributed across different locations",
           5: "Fully distributed across multiple time zones"
-        }
-      },
-      'Application Criticality': {
-        facts: "Fact: The platform is not mission-critical but affects workforce productivity and contractor payments. Assumption: Stability is important, but occasional downtime is tolerable.",
-        scaleInterpretation: {
-          1: "High-risk system (e.g., medical, aerospace)",
-          2: "Critical financial system (e.g., stock trading)",
-          3: "Medium-criticality (e.g., HR software, contractor payments)",
-          4: "Low-medium impact (some downtime tolerable)",
-          5: "Non-critical system (e.g., internal tools, hobby apps)"
-        }
-      },
-      'Requirement Volatility': {
-        facts: "Fact: The PRD states that requirements may evolve as new startups onboard. Assumption: The methodology must support rapid adaptation to changes.",
-        scaleInterpretation: {
-          1: "Very stable requirements (e.g., government projects)",
-          2: "Mostly stable, minor changes expected",
-          3: "Some moderate changes, needs flexibility",
-          4: "High volatility, frequent requirement shifts",
-          5: "Extremely volatile, rapidly changing priorities"
         }
       },
       'Development Speed': {
@@ -159,16 +101,6 @@ const DEFAULT_DATA: MAUTData = {
           4: "Strong QA, TDD, automated testing, code reviews",
           5: "Very high quality standards, rigorous testing required"
         }
-      },
-      'Workflow Efficiency': {
-        facts: "Fact: The small team size means that workflow bottlenecks must be minimized. Assumption: Kanban (with WIP limits) and backlog prioritization (MoSCoW method) can improve efficiency.",
-        scaleInterpretation: {
-          1: "Poor workflow efficiency, lots of bottlenecks",
-          2: "Some delays, but manageable",
-          3: "Moderate efficiency, room for improvement",
-          4: "Well-structured workflow, smooth progress",
-          5: "Highly optimized workflow, minimal delays"
-        }
       }
     }
   }
@@ -185,28 +117,22 @@ export const COLORS: { [key in MethodName]: string } = {
 
 // Color palette for criteria categories
 export const CRITERIA_COLORS: { [key in CriteriaName]: { light: string; medium: string; dark: string; } } = {
-  "Team size": { light: "#E1F5FE", medium: "#81D4FA", dark: "#0288D1" },
-  "Team distribution": { light: "#F3E5F5", medium: "#CE93D8", dark: "#7B1FA2" },
-  "Application Criticality": { light: "#FFF3E0", medium: "#FFB74D", dark: "#F57C00" },
-  "Requirement Volatility": { light: "#E8F5E9", medium: "#81C784", dark: "#2E7D32" },
-  "Development Speed": { light: "#F3E5F5", medium: "#BA68C8", dark: "#7B1FA2" },
-  "Cost Management": { light: "#E1F5FE", medium: "#4FC3F7", dark: "#0288D1" },
-  "Scalability": { light: "#FFF3E0", medium: "#FFA726", dark: "#F57C00" },
-  "Quality Assurance": { light: "#E8F5E9", medium: "#66BB6A", dark: "#2E7D32" },
-  "Workflow Efficiency": { light: "#E0F7FA", medium: "#4DD0E1", dark: "#00838F" }
+  "Team size": { light: "#E1F5FE", medium: "#81D4FA", dark: "#0288D1" },         // Blue
+  "Team distribution": { light: "#F3E5F5", medium: "#CE93D8", dark: "#7B1FA2" }, // Purple
+  "Development Speed": { light: "#FFF8E1", medium: "#FFD54F", dark: "#FFA000" }, // Amber/Gold
+  "Cost Management": { light: "#E8EAF6", medium: "#7986CB", dark: "#3949AB" },   // Indigo
+  "Scalability": { light: "#FFF3E0", medium: "#FFA726", dark: "#F57C00" },       // Orange
+  "Quality Assurance": { light: "#E8F5E9", medium: "#66BB6A", dark: "#2E7D32" }  // Green
 };
 
 // Add icon mapping before the MAUTDashboard component
 const CRITERIA_ICONS: { [key in CriteriaName]: React.ReactElement } = {
   "Team size": <BsPeopleFill className="inline-block mr-2" />,
   "Team distribution": <BsGlobe2 className="inline-block mr-2" />,
-  "Application Criticality": <BsShieldCheck className="inline-block mr-2" />,
-  "Requirement Volatility": <BsLightningCharge className="inline-block mr-2" />,
   "Development Speed": <MdSpeed className="inline-block mr-2" />,
   "Cost Management": <MdAttachMoney className="inline-block mr-2" />,
   "Scalability": <MdScale className="inline-block mr-2" />,
-  "Quality Assurance": <MdVerifiedUser className="inline-block mr-2" />,
-  "Workflow Efficiency": <MdWorkspaces className="inline-block mr-2" />
+  "Quality Assurance": <MdVerifiedUser className="inline-block mr-2" />
 };
 
 // Add a Tooltip wrapper component for reusability
